@@ -334,7 +334,7 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
       <div class="demo-board" id="demoBoard"></div>
       <div class="finger" id="finger"><i></i></div>
     </div>
-    <p class="cap" id="cap" aria-live="polite">Each turn draws a number from 100 to 999.</p>
+    <p class="cap" id="cap" aria-live="polite">Each turn draws a number from 001 to 999.</p>
     <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i></div>
     <p class="fine">Pick 4 to 20 slots at the top. Win odds shows your chance if you play perfectly from here.</p>
     <button class="pill solid" id="play">Play</button>
@@ -347,7 +347,7 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 <script>
 (() => {
 const V=[1,1,.75,.51928,.34358,.22141,.14017,.087637,.054279,.033375,.020403,.012414,.0075238,.0045448,.0027375,.0016449,.00098624,.00059022,.00035262,.00021036,.00012532];
-const LO=100, HI=999, SPAN=HI-LO+1, MODES=[4,8,12,16,20];
+const LO=1, HI=999, SPAN=HI-LO+1, F=v=>String(v).padStart(3,'0'), MODES=[4,8,12,16,20];
 let N=12;
 const $=id=>document.getElementById(id);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -466,7 +466,7 @@ async function spinDigit(f,first,target,base,T,o){
 }
 function spinFlaps(fl,x,o){
   const d=[Math.floor(x/100),Math.floor(x/10)%10,x%10], T=o.T||[560,800,1040];
-  return Promise.all(d.map((t,i)=>spinDigit(fl[i],i===0,t,[3,5,7][i],T[i],o)));
+  return Promise.all(d.map((t,i)=>spinDigit(fl[i],false,t,[3,5,7][i],T[i],o)));
 }
 const reel=$('reel'), flaps=[0,1,2].map(()=>makeFlap(reel));
 let skip=false;
@@ -539,14 +539,14 @@ function render(){
     el.classList.toggle('valid',choosing&&valid.includes(i));
     el.classList.toggle('best',choosing&&store.hint&&i===best);
     el.classList.toggle('bad',bad.includes(i));
-    el.querySelector('.val').textContent=v==null?'':v;
+    el.querySelector('.val').textContent=v==null?'':F(v);
     el.disabled=false; el.tabIndex=choosing&&valid.includes(i)?0:-1;
-    el.setAttribute('aria-label','Slot '+(i+1)+(v!=null?', '+v:', empty'));
+    el.setAttribute('aria-label','Slot '+(i+1)+(v!=null?', '+F(v):', empty'));
   });
   const p=placed();
   $('n').textContent=Math.min(p+(phase==='over'?0:1),N);
   $('draw').classList.toggle('ready',choosing);
-  $('status').textContent=phase==='idle'?'Tap Play to start':phase==='spin'?'Drawing…':phase==='place'?(valid.length===1?'One slot fits':valid.length+' slots fit'):phase==='over'?(p===N?'Perfect run':'No slot fits '+cur):'';
+  $('status').textContent=phase==='idle'?'Tap Play to start':phase==='spin'?'Drawing…':phase==='place'?(valid.length===1?'One slot fits':valid.length+' slots fit'):phase==='over'?(p===N?'Perfect run':'No slot fits '+F(cur)):'';
   const c=chance();
   $('odds').textContent=fmtOdds(c);
   $('meter').style.width=Math.max(0,Math.min(1,(Math.log10(c)+4.3)/4.3))*100+'%';
@@ -556,7 +556,7 @@ function render(){
 async function draw(){
   phase='spin'; valid=[]; best=-1; render();
   cur=LO+Math.floor(Math.random()*SPAN);
-  reel.setAttribute('aria-label','Drawn number '+cur);
+  reel.setAttribute('aria-label','Drawn number '+F(cur));
   await spinTo(cur);
   valid=validFor(cur);
   if(!valid.length){lose();return}
@@ -582,7 +582,7 @@ async function place(i){
 function fly(el){
   const from=reel.getBoundingClientRect(), to=el.getBoundingClientRect();
   const fl=el.cloneNode(true); fl.className='slot filled flyer';
-  fl.querySelector('.val').textContent=cur; fl.removeAttribute('data-i');
+  fl.querySelector('.val').textContent=F(cur); fl.removeAttribute('data-i');
   Object.assign(fl.style,{left:to.left+'px',top:to.top+'px',width:to.width+'px',height:to.height+'px'});
   document.body.appendChild(fl);
   const s=Math.min(from.width/to.width,from.height/to.height)*.9;
@@ -627,17 +627,17 @@ function shareText(){
   const row=(a,b)=>slots.slice(a,b).map(v=>v==null?'⬜':'🟩').join('');
   const half=N<=4?N:N/2;
   const grid=N<=4?row(0,N):row(0,half)+'\n'+row(half,N);
-  return N+' Numbers  '+p+'/'+N+'\n'+grid+'\n'+(won?'Perfect run ('+perfectOdds(N)+')':'🟥 '+cur+' had nowhere to go');
+  return N+' Numbers  '+p+'/'+N+'\n'+grid+'\n'+(won?'Perfect run ('+perfectOdds(N)+')':'🟥 '+F(cur)+' had nowhere to go');
 }
 function showResult(won){
   const p=placed();
   $('rTitle').textContent=won?'Perfect run':'Out of room';
   $('rMsg').innerHTML=won?'All '+N+' in order. You beat <b>'+perfectOdds(N)+'</b>.':
-    '<b>'+cur+'</b> had nowhere to go. '+(p>prevBest&&st().runs>1?'New best.':p===prevBest&&p>0?'Ties your best.':'');
+    '<b>'+F(cur)+'</b> had nowhere to go. '+(p>prevBest&&st().runs>1?'New best.':p===prevBest&&p>0?'Ties your best.':'');
   $('rTiles').innerHTML=String(p).split('').map(d=>'<i>'+d+'</i>').join('');
   $('ladder').style.gridTemplateColumns='repeat('+(N<=4?N:N/2)+',1fr)';
   $('rOf').textContent='/'+N; $('rOdds').textContent=perfectOdds(N);
-  $('ladder').innerHTML=slots.map((v,i)=>'<div class="'+(v!=null?'on':'')+'"><small>'+(i+1)+'</small>'+(v??'')+'</div>').join('');
+  $('ladder').innerHTML=slots.map((v,i)=>'<div class="'+(v!=null?'on':'')+'"><small>'+(i+1)+'</small>'+(v==null?'':F(v))+'</div>').join('');
   $('sBest').textContent=st().best; $('sRuns').textContent=st().runs; $('sWins').textContent=st().wins;
   show('result');
 }
@@ -694,7 +694,7 @@ const dflaps=[0,1,2].map(()=>makeFlap($('demoReel')));
 const DN=5, dslots=[];
 for(let i=0;i<DN;i++){const d=document.createElement('div');d.className='dslot';
   d.innerHTML='<span class="idx">'+(i+1)+'</span><span class="val"></span>';demoBoard.appendChild(d);dslots.push(d)}
-const SCRIPT=[{x:512,to:2},{x:187,to:0},{x:846,to:4},{x:330,to:1},{x:401,to:-1}];
+const SCRIPT=[{x:512,to:2},{x:87,to:0},{x:846,to:4},{x:330,to:1},{x:401,to:-1}];
 let demoTok=0;
 function say(t,step){
   if(cap.textContent!==t){cap.classList.add('swap');setTimeout(()=>{cap.textContent=t;cap.classList.remove('swap')},170)}
@@ -706,7 +706,7 @@ async function runDemo(){
   const dv=Array(DN).fill(null);
   const paint=(valid=[],bad=[])=>dslots.forEach((el,i)=>{
     el.classList.toggle('filled',dv[i]!=null);el.classList.toggle('valid',valid.includes(i));
-    el.classList.toggle('bad',bad.includes(i));el.querySelector('.val').textContent=dv[i]??''});
+    el.classList.toggle('bad',bad.includes(i));el.querySelector('.val').textContent=dv[i]==null?'':F(dv[i])});
   const fits=x=>{const out=[];for(let s=0;s<DN;s++){if(dv[s]!=null)continue;let lo=LO,hi=HI;
     for(let j=s-1;j>=0;j--)if(dv[j]!=null){lo=dv[j];break}
     for(let j=s+1;j<DN;j++)if(dv[j]!=null){hi=dv[j];break}
@@ -724,11 +724,11 @@ async function runDemo(){
   try{
     for(;;){
       dv.fill(null);paint();demoBoard.classList.remove('choosing');finger.classList.remove('show');
-      dflaps.forEach((f,i)=>setFlap(f,i===0?1:0));
+      dflaps.forEach(f=>setFlap(f,0));
       await W(500);
       for(let k=0;k<SCRIPT.length;k++){
         const {x,to}=SCRIPT[k];
-        if(k===0) say('Each turn draws a number from 100 to 999.',0);
+        if(k===0) say('Each turn draws a number from 001 to 999.',0);
         if(k===1) say('Only slots that keep the column low to high light up.',2);
         if(k===3) say('Fewer slots light up as the column fills. Leave room.',2);
         await spinFlaps(dflaps,x,{sound:false,T:[650,900,1150],isSkip:()=>!live()});
@@ -764,7 +764,7 @@ $('help').addEventListener('click',openIntro);
 addEventListener('keydown',e=>{if(e.key==='Escape')closeIntro()});
 
 function start(data){
-  flaps.forEach((f,i)=>setFlap(f,i===0?1:0));
+  flaps.forEach(f=>setFlap(f,0));
   if(data&&MODES.includes(data.N)&&data.N!==N){N=data.N;buildBoard()}
   if(data&&Array.isArray(data.slots)&&data.slots.length===N&&data.phase==='place'&&data.cur){
     slots=data.slots;cur=data.cur;
