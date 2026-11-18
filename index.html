@@ -301,16 +301,16 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
 (() => {
 const V=[1,1,.75,.51928,.34358,.22141,.14017,.087637,.054279,.033375,.020403,.012414,.0075238,.0045448,.0027375,.0016449,.00098624,.00059022,.00035262,.00021036,.00012532];
 const LO=100, HI=999, SPAN=HI-LO+1, MODES=[4,8,12,16,20];
-let N=20;
+let N=12;
 const $=id=>document.getElementById(id);
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- storage ---------- */
 const KEY='twenty-numbers.v1';
-let store={mode:20,stats:{},muted:false,hint:false};
+let store={mode:12,stats:{},muted:false,hint:false};
 try{Object.assign(store,JSON.parse(localStorage.getItem(KEY))||{})}catch(e){}
 if(store.best!=null&&!store.stats[20]){store.stats[20]={best:store.best,runs:store.runs||0,wins:store.wins||0};delete store.best;delete store.runs;delete store.wins}
-if(!MODES.includes(store.mode)) store.mode=20;
+if(!MODES.includes(store.mode)) store.mode=12;
 N=store.mode;
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}};
 const st=()=>store.stats[N]||(store.stats[N]={best:0,runs:0,wins:0});
