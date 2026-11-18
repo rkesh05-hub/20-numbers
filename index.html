@@ -85,7 +85,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* draw area */
 .draw{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex:none}
 .reelwrap{display:flex;flex-direction:column;gap:8px}
-.reel{display:flex;gap:6px;perspective:520px;cursor:pointer}
+.reel{display:flex;gap:6px;cursor:pointer;padding-bottom:5px}
 .base{height:3px;border-radius:2px;background:var(--line);overflow:hidden;position:relative}
 .base::after{content:"";position:absolute;inset:0;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .32s cubic-bezier(.2,.8,.2,1)}
 .ready .base::after{transform:scaleX(1)}
@@ -94,8 +94,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   position:relative;width:var(--cw);height:var(--ch);border-radius:7px;
   font-family:var(--display);font-weight:600;font-stretch:72%;font-size:calc(var(--ch) * .8);
   color:var(--card-text);font-variant-numeric:tabular-nums;
-  box-shadow:0 1px 0 rgba(0,0,0,.05),0 2px 3px rgba(0,0,0,.12),0 14px 22px -14px rgba(0,0,0,.55);
-  transform-style:preserve-3d;
+  /* a stack of cards under the face, then a soft cast shadow */
+  box-shadow:0 1px 0 #0b0b0a,0 2px 0 #2b2b29,0 3px 0 #0b0b0a,0 4px 0 #272725,0 5px 1px rgba(0,0,0,.4),0 18px 22px -12px rgba(0,0,0,.55);
 }
 .half,.leaf{position:absolute;left:0;right:0;height:50%;overflow:hidden}
 .top{top:0;border-radius:7px 7px 0 0;background:var(--card-top)}
@@ -103,9 +103,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .half span,.leaf span{position:absolute;left:0;right:0;height:var(--ch);line-height:var(--ch);text-align:center}
 .top span{top:0}
 .bottom span{bottom:0}
-.leaf{z-index:2;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.leaf{z-index:2;visibility:hidden;will-change:transform}
 .leaf.top{transform-origin:50% 100%}
-.leaf.bottom{transform-origin:50% 0;transform:rotateX(90deg)}
+.leaf.bottom{transform-origin:50% 0}
+.sh{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
 .flap::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;background:rgba(0,0,0,.6);z-index:3}
 .flap::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;margin-top:1px;background:rgba(255,255,255,.05);z-index:3}
 .pin{position:absolute;top:50%;width:4px;height:16px;margin-top:-8px;border-radius:2px;background:var(--pin);z-index:4}
@@ -211,6 +212,48 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .howto li{display:flex;gap:12px;font-size:15px;line-height:1.4;counter-increment:s}
 .howto li::before{content:counter(s);flex:none;width:22px;height:28px;border-radius:4px;background:var(--card);color:var(--card-text);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:15px}
 
+/* intro: animated how-to-play card */
+.intro{position:fixed;inset:0;z-index:40;display:grid;place-items:center;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+  background:rgba(10,10,9,.5);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.intro.on{opacity:1;pointer-events:auto}
+.intro-card{width:100%;max-width:400px;max-height:100%;overflow:auto;background:var(--paper);border:1px solid var(--line);border-radius:22px;
+  padding:22px 20px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 60px -20px rgba(0,0,0,.5);
+  transform:translateY(18px) scale(.97);transition:transform .5s var(--spring)}
+.intro.on .intro-card{transform:none}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.intro h2{font-family:var(--display);font-stretch:78%;font-weight:700;font-size:30px;line-height:1.05;text-wrap:balance;margin-top:-6px}
+.demo{position:relative;display:flex;align-items:center;gap:16px;padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--line);height:232px;overflow:hidden;flex:none}
+.demo-reel{display:flex;gap:4px;--cw:36px;--ch:48px;flex:none;padding-bottom:5px}
+.demo-reel .pin{width:3px;height:9px;margin-top:-4.5px}
+.demo-board{flex:1;height:100%;display:grid;grid-template-rows:repeat(5,1fr);gap:5px}
+.dslot{position:relative;display:flex;align-items:center;justify-content:space-between;padding:0 10px;border-radius:6px;
+  background:var(--paper);border:1px solid var(--line);transition:background-color .2s,border-color .2s,opacity .2s,transform .16s var(--spring)}
+.dslot .idx{font-size:10px;font-weight:500;color:var(--mute)}
+.dslot .val{font-family:var(--display);font-stretch:78%;font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;line-height:1}
+.demo-board.choosing .dslot:not(.valid):not(.filled){opacity:.4}
+.dslot.valid{background:color-mix(in oklab,var(--accent) 12%,var(--paper));border-color:var(--accent)}
+.dslot.valid .idx{color:var(--accent);font-weight:600}
+.dslot.filled{background:var(--card);border-color:var(--card);color:var(--card-text)}
+.dslot.filled .idx{color:rgba(246,245,241,.45)}
+.dslot.filled::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.5)}
+.dslot.bad{background:var(--bad);border-color:var(--bad);color:#fff;box-shadow:0 0 0 3px color-mix(in oklab,var(--bad) 28%,transparent)}
+.dslot.bad .idx{color:rgba(255,255,255,.75)}
+.dslot.press{transform:scale(.95)}
+.dslot.settle{animation:settle .3s var(--spring)}
+.finger{position:absolute;left:0;top:0;width:30px;height:30px;opacity:0;pointer-events:none;z-index:5;
+  transition:transform .6s cubic-bezier(.45,0,.2,1),opacity .25s}
+.finger.show{opacity:1}
+.finger i{display:block;width:100%;height:100%;border-radius:50%;background:color-mix(in oklab,var(--ink) 30%,transparent);
+  border:2px solid var(--paper);box-shadow:0 3px 10px rgba(0,0,0,.3);transition:transform .14s ease-out}
+.finger.tap i{transform:scale(.76)}
+.cap{font-size:16px;line-height:1.4;min-height:2.8em;transition:opacity .16s;text-wrap:balance}
+.cap.swap{opacity:0}
+.dots{display:flex;gap:6px;margin-top:-4px}
+.dots i{width:16px;height:3px;border-radius:2px;background:var(--line);transition:background .25s,width .25s var(--spring)}
+.dots i.on{background:var(--ink);width:28px}
+#play{height:52px;width:100%;justify-content:center;font-size:16px}
 .toast{position:fixed;left:50%;top:max(16px,env(safe-area-inset-top));z-index:30;transform:translate(-50%,-140%);
   background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;
   transition:transform .35s var(--spring)}
@@ -282,16 +325,20 @@ canvas#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-in
   </div>
 </section>
 
-<section class="sheet howto" id="howto" aria-hidden="true">
-  <div class="grab"></div>
-  <h2>How to play</h2>
-  <ol>
-    <li>Each turn draws a number from 100 to 999.</li>
-    <li>Tap a lit slot to place it. The column must read low to high, 1 to 20.</li>
-    <li>If the number has nowhere to go, the run ends. Fill every slot to win.</li>
-  </ol>
-  <p class="fine">Win odds shows your chance of finishing from here if you play perfectly from now on. Tap the reel to skip the spin. Tap 4, 8, 12, 16 or 20 at the top to change the board size.</p>
-  <div class="actions" style="grid-template-columns:1fr"><button class="pill solid" id="gotit">Got it</button></div>
+<section class="intro" id="intro" role="dialog" aria-modal="true" aria-labelledby="introTitle" aria-hidden="true">
+  <div class="intro-card">
+    <p class="eyebrow">How to play</p>
+    <h2 id="introTitle">Keep the column in order.</h2>
+    <div class="demo" id="demo" aria-hidden="true">
+      <div class="demo-reel" id="demoReel"></div>
+      <div class="demo-board" id="demoBoard"></div>
+      <div class="finger" id="finger"><i></i></div>
+    </div>
+    <p class="cap" id="cap" aria-live="polite">Each turn draws a number from 100 to 999.</p>
+    <div class="dots" id="dots"><i class="on"></i><i></i><i></i><i></i></div>
+    <p class="fine">Pick 4 to 20 slots at the top. Win odds shows your chance if you play perfectly from here.</p>
+    <button class="pill solid" id="play">Play</button>
+  </div>
 </section>
 
 <div class="toast" id="toast"></div>
@@ -351,60 +398,80 @@ const sfx={
   thud:()=>{tone({f0:120,f1:42,vol:.5,dec:.38});burst({freq:300,q:.7,vol:.18,dec:.12,type:'lowpass'})},
   chime:()=>[659.25,783.99,1046.5].forEach((f,i)=>{tone({f0:f,vol:.16,dec:.7,type:'triangle',at:i*.11});tone({f0:f*2,vol:.03,dec:.4,at:i*.11})})
 };
-const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const hapticEl=(()=>{try{const l=document.createElement('label');l.setAttribute('aria-hidden','true');
+  l.style.cssText='position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none';
+  const i=document.createElement('input');i.type='checkbox';i.setAttribute('switch','');i.tabIndex=-1;l.appendChild(i);
+  document.body.appendChild(l);return l}catch(e){return null}})();
+const buzz=p=>{try{if(navigator.vibrate){navigator.vibrate(p);return}}catch(e){} try{hapticEl&&hapticEl.click()}catch(e){}};
 
 /* ---------- reel (split-flap) ---------- */
-const reel=$('reel'), flaps=[];
-for(let i=0;i<3;i++){
+// Each flip rotates a half-card with perspective() inside its own transform.
+// No preserve-3d, backface-visibility or filters, which Safari renders unreliably.
+const canAnim=!!(window.Element&&Element.prototype.animate);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function makeFlap(container){
   const el=document.createElement('div'); el.className='flap';
-  el.innerHTML='<div class="half top"><span></span></div><div class="half bottom"><span></span></div><div class="leaf top"><span></span></div><div class="leaf bottom"><span></span></div><i class="pin l"></i><i class="pin r"></i>';
-  reel.appendChild(el);
-  const q=s=>el.querySelector(s+' span');
-  flaps.push({el,st:q('.half.top'),sb:q('.half.bottom'),lt:q('.leaf.top'),lb:q('.leaf.bottom'),
-    ltEl:el.querySelector('.leaf.top'),lbEl:el.querySelector('.leaf.bottom'),v:0});
+  el.innerHTML='<div class="half top"><span></span></div><div class="half bottom"><span></span><i class="sh"></i></div>'+
+    '<div class="leaf top"><span></span><i class="sh"></i></div><div class="leaf bottom"><span></span><i class="sh"></i></div>'+
+    '<i class="pin l"></i><i class="pin r"></i>';
+  container.appendChild(el);
+  const g=q=>el.querySelector(q);
+  return {el,st:g('.half.top span'),sb:g('.half.bottom span'),sbS:g('.half.bottom .sh'),
+    lt:g('.leaf.top span'),lb:g('.leaf.bottom span'),ltEl:g('.leaf.top'),lbEl:g('.leaf.bottom'),
+    ltS:g('.leaf.top .sh'),lbS:g('.leaf.bottom .sh'),v:0,anims:[],tok:0};
 }
-function setFlap(f,v){f.v=v;f.st.textContent=f.sb.textContent=f.lt.textContent=f.lb.textContent=v;
-  f.ltEl.getAnimations().forEach(a=>a.cancel());f.lbEl.getAnimations().forEach(a=>a.cancel());
-  f.ltEl.style.transform='';f.lbEl.style.transform='rotateX(90deg)';}
+function setFlap(f,v){
+  f.tok++; f.anims.forEach(a=>{try{a.cancel()}catch(e){}}); f.anims=[];
+  f.v=v; f.st.textContent=f.sb.textContent=f.lt.textContent=f.lb.textContent=v;
+  f.ltEl.style.visibility='hidden'; f.lbEl.style.visibility='hidden'; f.sbS.style.opacity=0;
+}
 async function flipTo(f,to,dur){
-  if(dur<22||reduce){setFlap(f,to);return}
-  const from=f.v;
+  if(reduce||!canAnim){setFlap(f,to);await sleep(dur);return}
+  const from=f.v, tok=++f.tok, P=Math.round(f.el.offsetHeight*3.4), h=dur/2;
+  const R=d=>({transform:'perspective('+P+'px) rotateX('+d+'deg)'});
   f.st.textContent=to; f.sb.textContent=from; f.lt.textContent=from; f.lb.textContent=to;
-  const h=dur/2;
-  const a=f.ltEl.animate([{transform:'rotateX(0deg)',filter:'brightness(1)'},{transform:'rotateX(-90deg)',filter:'brightness(.55)'}],{duration:h,easing:'cubic-bezier(.5,0,.9,.6)',fill:'forwards'});
-  await a.finished.catch(()=>{});
-  const b=f.lbEl.animate([{transform:'rotateX(90deg)',filter:'brightness(1.6)'},{transform:'rotateX(0deg)',filter:'brightness(1)'}],
-    {duration:h,easing:dur>110?'cubic-bezier(.25,1.45,.5,1)':'cubic-bezier(.1,.4,.4,1)',fill:'forwards'});
-  await b.finished.catch(()=>{});
+  f.ltEl.style.visibility='visible'; f.lbEl.style.visibility='hidden';
+  const o1={duration:h,easing:'cubic-bezier(.55,0,.85,.45)',fill:'forwards'};
+  const a1=f.ltEl.animate([R(0),R(-90)],o1);
+  f.anims.push(a1,f.ltS.animate([{opacity:0},{opacity:.55}],o1),f.sbS.animate([{opacity:0},{opacity:.3}],o1));
+  try{await a1.finished}catch(e){}
+  if(tok!==f.tok) return;
+  f.ltEl.style.visibility='hidden'; f.lbEl.style.visibility='visible'; f.sbS.style.opacity=0;
+  const slow=dur>150;
+  const o2={duration:slow?h*1.3:h,easing:slow?'cubic-bezier(.2,.7,.3,1)':'cubic-bezier(.15,.5,.35,1)',fill:'forwards'};
+  const kf=slow?[R(90),Object.assign(R(-8),{offset:.7}),Object.assign(R(2.5),{offset:.87}),R(0)]:[R(90),R(0)];
+  const a2=f.lbEl.animate(kf,o2);
+  f.anims.push(a2,f.lbS.animate([{opacity:.45},{opacity:0}],o2));
+  try{await a2.finished}catch(e){}
+  if(tok!==f.tok) return;
   setFlap(f,to);
 }
-let skip=false;
-reel.addEventListener('pointerdown',()=>{if(phase==='spin') skip=true});
-async function spinDigit(i,target,base,T){
-  const f=flaps[i], first=i===0, m=first?9:10;
-  const idx=v=>first?v-1:v, val=k=>first?k+1:k;
-  let cur=f.v===''||f.v==null?(first?1:0):f.v;
-  const steps=((idx(target)-idx(cur))%m+m)%m;
-  const total=base+steps;
-  // plan: fast at first, easing out like a slot reel, landing at time T
+async function spinDigit(f,first,target,base,T,o){
+  const m=first?9:10, idx=v=>first?v-1:v, val=k=>first?k+1:k;
+  let cur=+f.v; if(!(cur>=0)) cur=0; if(first&&cur<1) cur=1;
+  const steps=((idx(target)-idx(cur))%m+m)%m, total=base+steps;
+  // fast at first, easing out like a slot reel, landing at time T
   const w=[];for(let k=1;k<=total;k++){const t=k/total;w.push(1+9*t*t*t)}
   const sum=w.reduce((x,y)=>x+y,0);let acc=0;const ends=w.map(x=>acc+=x/sum*T);
   const t0=performance.now();
   for(let k=1;k<=total;k++){
     cur=val((idx(cur)+1)%m);
-    if(skip||reduce){break}
+    if(o.isSkip&&o.isSkip()) break;
     const left=ends[k-1]-(performance.now()-t0);
-    if(left<30){setFlap(f,cur);if(k%2)sfx.flick(.6);await new Promise(r=>requestAnimationFrame(r));continue}
-    sfx.flick(.5+k/total);
+    if(left<34){setFlap(f,cur);if(o.sound&&k%2)sfx.flick(.6);await new Promise(r=>requestAnimationFrame(r));continue}
+    if(o.sound) sfx.flick(.5+k/total);
     await flipTo(f,cur,left);
   }
-  setFlap(f,target); sfx.clack();
+  setFlap(f,target); if(o.sound) sfx.clack();
 }
-async function spinTo(x){
-  skip=false;
-  const d=[Math.floor(x/100),Math.floor(x/10)%10,x%10];
-  await Promise.all(d.map((t,i)=>spinDigit(i,t,[3,5,7][i],[560,800,1040][i])));
+function spinFlaps(fl,x,o){
+  const d=[Math.floor(x/100),Math.floor(x/10)%10,x%10], T=o.T||[560,800,1040];
+  return Promise.all(d.map((t,i)=>spinDigit(fl[i],i===0,t,[3,5,7][i],T[i],o)));
 }
+const reel=$('reel'), flaps=[0,1,2].map(()=>makeFlap(reel));
+let skip=false;
+reel.addEventListener('pointerdown',()=>{if(phase==='spin') skip=true});
+function spinTo(x){skip=false;return spinFlaps(flaps,x,{sound:true,isSkip:()=>skip})}
 
 /* ---------- board ---------- */
 const board=$('board'); let slotEls=[];
@@ -417,6 +484,7 @@ function buildBoard(){
     const b=document.createElement('button'); b.className='slot'; b.dataset.i=i;
     b.innerHTML='<span class="idx">'+(i+1)+'</span><span class="val"></span>';
     b.addEventListener('pointerdown',e=>{e.preventDefault();place(i)});
+    b.addEventListener('click',()=>{if(performance.now()-placedAt<600&&!navigator.vibrate){try{hapticEl&&hapticEl.click()}catch(e){}}});
     b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();place(i)}});
     board.appendChild(b); slotEls.push(b);
   }
@@ -426,12 +494,13 @@ function buildBoard(){
 MODES.forEach(n=>{
   const m=document.createElement('button'); m.className='mode'; m.dataset.n=n; m.textContent=n;
   m.setAttribute('role','radio'); m.setAttribute('aria-label',n+' slots');
-  m.addEventListener('click',()=>{if(n===N||phase==='fly')return;N=n;store.mode=n;save();buildBoard();newGame()});
+  m.addEventListener('click',()=>{if(n===N||phase==='fly')return;N=n;store.mode=n;save();buildBoard();started=true;newGame()});
   $('modes').appendChild(m);
 });
 buildBoard();
 
 /* ---------- state ---------- */
+let placedAt=-1e9;
 let slots, last=-1, cur=null, phase='spin', locked=false, valid=[], best=-1, bad=[];
 
 function gap(s){
@@ -477,7 +546,7 @@ function render(){
   const p=placed();
   $('n').textContent=Math.min(p+(phase==='over'?0:1),N);
   $('draw').classList.toggle('ready',choosing);
-  $('status').textContent=phase==='spin'?'Drawing…':phase==='place'?(valid.length===1?'One slot fits':valid.length+' slots fit'):phase==='over'?(p===N?'Perfect run':'No slot fits '+cur):'';
+  $('status').textContent=phase==='idle'?'Tap Play to start':phase==='spin'?'Drawing…':phase==='place'?(valid.length===1?'One slot fits':valid.length+' slots fit'):phase==='over'?(p===N?'Perfect run':'No slot fits '+cur):'';
   const c=chance();
   $('odds').textContent=fmtOdds(c);
   $('meter').style.width=Math.max(0,Math.min(1,(Math.log10(c)+4.3)/4.3))*100+'%';
@@ -498,7 +567,7 @@ async function draw(){
 async function place(i){
   if(phase!=='place'||locked||!valid.includes(i)) return;
   locked=true; phase='fly';
-  sfx.tick(); buzz(8);
+  sfx.tick(); placedAt=performance.now(); try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}
   const el=slotEls[i];
   slotEls.forEach(s=>s.classList.remove('valid','best'));
   board.classList.remove('choosing');
@@ -574,8 +643,6 @@ function showResult(won){
 }
 $('scrim').addEventListener('click',()=>{if(openSheet&&openSheet.id==='howto')hide()});
 $('again').addEventListener('click',()=>{hide();newGame()});
-$('gotit').addEventListener('click',hide);
-$('help').addEventListener('click',()=>show('howto'));
 $('share').addEventListener('click',async()=>{
   const t=shareText();
   try{await navigator.clipboard.writeText(t);toast('Copied. Paste it to a friend.')}
@@ -620,15 +687,91 @@ function confetti(){
 /* ---------- boot ---------- */
 function newGame(){slots=Array(N).fill(null);last=-1;cur=null;bad=[];valid=[];best=-1;locked=false;hide();draw()}
 window.claude?.hot?.snapshot?.(()=>({slots,cur,phase,N}));
+/* ---------- intro demo ---------- */
+const intro=$('intro'), demoBoard=$('demoBoard'), finger=$('finger'), cap=$('cap'), demoEl=$('demo');
+const dots=[...$('dots').children];
+const dflaps=[0,1,2].map(()=>makeFlap($('demoReel')));
+const DN=5, dslots=[];
+for(let i=0;i<DN;i++){const d=document.createElement('div');d.className='dslot';
+  d.innerHTML='<span class="idx">'+(i+1)+'</span><span class="val"></span>';demoBoard.appendChild(d);dslots.push(d)}
+const SCRIPT=[{x:512,to:2},{x:187,to:0},{x:846,to:4},{x:330,to:1},{x:401,to:-1}];
+let demoTok=0;
+function say(t,step){
+  if(cap.textContent!==t){cap.classList.add('swap');setTimeout(()=>{cap.textContent=t;cap.classList.remove('swap')},170)}
+  dots.forEach((d,i)=>d.classList.toggle('on',i===step));
+}
+async function runDemo(){
+  const tok=++demoTok, live=()=>tok===demoTok;
+  const W=async ms=>{await sleep(ms);if(!live())throw 0};
+  const dv=Array(DN).fill(null);
+  const paint=(valid=[],bad=[])=>dslots.forEach((el,i)=>{
+    el.classList.toggle('filled',dv[i]!=null);el.classList.toggle('valid',valid.includes(i));
+    el.classList.toggle('bad',bad.includes(i));el.querySelector('.val').textContent=dv[i]??''});
+  const fits=x=>{const out=[];for(let s=0;s<DN;s++){if(dv[s]!=null)continue;let lo=LO,hi=HI;
+    for(let j=s-1;j>=0;j--)if(dv[j]!=null){lo=dv[j];break}
+    for(let j=s+1;j<DN;j++)if(dv[j]!=null){hi=dv[j];break}
+    if(x>=lo&&x<=hi)out.push(s)}return out};
+  const boxIn=x=>{for(let i=0;i<DN-1;i++)if(dv[i]!=null&&dv[i+1]!=null&&dv[i]<=x&&x<=dv[i+1])return[i,i+1];return[]};
+  const fingerTo=(i)=>{
+    const d=demoEl.getBoundingClientRect(), r=dslots[i].getBoundingClientRect();
+    const x=r.left-d.left+r.width*.68-15, y=r.top-d.top+r.height/2-15;
+    if(!finger.classList.contains('show')){
+      finger.style.transition='none';finger.style.transform='translate('+(d.width-36)+'px,'+(d.height+10)+'px)';
+      void finger.offsetWidth;finger.style.transition='';finger.classList.add('show');
+    }
+    requestAnimationFrame(()=>{finger.style.transform='translate('+x+'px,'+y+'px)'});
+  };
+  try{
+    for(;;){
+      dv.fill(null);paint();demoBoard.classList.remove('choosing');finger.classList.remove('show');
+      dflaps.forEach((f,i)=>setFlap(f,i===0?1:0));
+      await W(500);
+      for(let k=0;k<SCRIPT.length;k++){
+        const {x,to}=SCRIPT[k];
+        if(k===0) say('Each turn draws a number from 100 to 999.',0);
+        if(k===1) say('Only slots that keep the column low to high light up.',2);
+        if(k===3) say('Fewer slots light up as the column fills. Leave room.',2);
+        await spinFlaps(dflaps,x,{sound:false,T:[650,900,1150],isSkip:()=>!live()});
+        if(!live()) throw 0;
+        const v=fits(x);
+        if(!v.length){
+          await W(350); paint([],boxIn(x)); say('No room for it? The run ends. Fill every slot to win.',3);
+          await W(3400); break;
+        }
+        demoBoard.classList.add('choosing');paint(v);
+        if(k===0){await W(500);say('Tap a lit slot to place it.',1)}
+        await W(850);
+        fingerTo(to); await W(700);
+        finger.classList.add('tap');dslots[to].classList.add('press');await W(170);
+        finger.classList.remove('tap');dslots[to].classList.remove('press');
+        dv[to]=x;demoBoard.classList.remove('choosing');paint();
+        dslots[to].classList.remove('settle');void dslots[to].offsetWidth;dslots[to].classList.add('settle');
+        await W(350); finger.classList.remove('show');
+        await W(650);
+      }
+    }
+  }catch(e){}
+}
+let started=false;
+function openIntro(){intro.classList.add('on');intro.setAttribute('aria-hidden','false');runDemo();setTimeout(()=>{try{$('play').focus({preventScroll:true})}catch(e){}},50)}
+function closeIntro(){
+  if(!intro.classList.contains('on')) return;
+  intro.classList.remove('on');intro.setAttribute('aria-hidden','true');demoTok++;
+  if(!started){started=true;newGame()}
+}
+$('play').addEventListener('click',closeIntro);
+$('help').addEventListener('click',openIntro);
+addEventListener('keydown',e=>{if(e.key==='Escape')closeIntro()});
+
 function start(data){
   flaps.forEach((f,i)=>setFlap(f,i===0?1:0));
   if(data&&MODES.includes(data.N)&&data.N!==N){N=data.N;buildBoard()}
   if(data&&Array.isArray(data.slots)&&data.slots.length===N&&data.phase==='place'&&data.cur){
     slots=data.slots;cur=data.cur;
     const d=[Math.floor(cur/100),Math.floor(cur/10)%10,cur%10]; flaps.forEach((f,i)=>setFlap(f,d[i]));
-    valid=validFor(cur); best=bestFor(cur,valid); phase='place'; render(); return;
+    valid=validFor(cur); best=bestFor(cur,valid); phase='place'; started=true; render(); return;
   }
-  newGame();
+  slots=Array(N).fill(null); phase='idle'; render(); openIntro();
 }
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 })();
